@@ -1,3 +1,161 @@
+## DDD Refactoring Plan for Severino
+
+**Core Principle:** Align software design with the business domain, focusing on ubiquitous language, bounded contexts, and aggregates.
+
+**I. Ubiquitous Language & Core Domain**
+
+1.  **Domain Definition:** `Severino`'s core domain is **Intelligent Edge Automation**. This encompasses perceiving the environment, reasoning about it, and acting autonomously based on high-level user directives.
+2.  **Ubiquitous Language:** Establish a shared vocabulary across all stakeholders (developers, users, domain experts):
+    *   **Agent:** The `Severino` system itself, an autonomous entity.
+    *   **Directive:** A high-level user prompt (e.g., "Watch child on balcony", "Monitor defects on Line 1").
+    *   **Insight:** Actionable intelligence derived by the Agent (e.g., "Child in danger", "Counterfeit part detected").
+    *   **Perception:** The process of acquiring and interpreting raw sensor data.
+    *   **Cognition:** The reasoning process (Refactor, Break Down, Compile) that transforms Perception into Insight.
+    *   **Action:** An external effect triggered by an Insight.
+    *   **Tool:** An external capability the Agent can invoke (e.g., camera, ML model, notification service).
+    *   **Memory:** The Agent's persistent and transient knowledge stores (Long-Term, Working, Thought Process).
+
+**II. Bounded Contexts & Context Mapping**
+
+Define clear boundaries for different parts of the system, each with its own consistent model and language.
+
+1.  **Agent Core Context:**
+    *   **Responsibility:** Orchestrates the cognitive process (Refactor, Break Down, Compile). Interprets Directives, manages Memory, and invokes Tools.
+    *   **Key Aggregates:** `Agent`, `Directive`, `Insight`, `ThoughtProcess`.
+    *   **Modules:** `src/core/agent/`, `src/core/memory/`.
+
+2.  **Perception Context:**
+    *   **Responsibility:** Handles all aspects of sensor data acquisition and initial processing.
+    *   **Key Aggregates:** `Sensor`, `SensorDataStream`, `RawObservation`.
+    *   **Modules:** `src/perception/` (e.g., `VideoSensor`, `TelemetrySensor`).
+    *   **Relationship:** Publishes `RawObservation` events to the Agent Core.
+
+3.  **ML Inference Context:**
+    *   **Responsibility:** Manages the loading and execution of all ML models.
+    *   **Key Aggregates:** `MLModel`, `InferenceRequest`, `InferenceResult`.
+    *   **Modules:** `src/ml_models/` (e.g., `VisionModel`, `TimeSeriesModel`).
+    *   **Relationship:** Provides `InferenceResult` to the Perception Context (for initial feature extraction) or directly to the Agent Core (for deeper analysis).
+
+4.  **Tooling Context:**
+    *   **Responsibility:** Centralized management and invocation of all external capabilities.
+    *   **Key Aggregates:** `ToolDefinition`, `ToolInvocation`, `ToolResult`.
+    *   **Modules:** `src/core/tooling/` (`ToolManager`).
+    *   **Relationship:** Agent Core requests `ToolInvocation`, receives `ToolResult`.
+
+5.  **Action Context:**
+    *   **Responsibility:** Executes external actions based on Agent Insights.
+    *   **Key Aggregates:** `ActionRequest`, `ActionExecutionResult`.
+    *   **Modules:** `src/actions/` (e.g., `NotificationAction`, `DeviceControlAction`).
+    *   **Relationship:** Agent Core issues `ActionRequest`, receives `ActionExecutionResult`.
+
+6.  **LLM Context:**
+    *   **Responsibility:** Provides an abstract interface for LLM interactions.
+    *   **Key Aggregates:** `LLMRequest`, `LLMResponse`.
+    *   **Modules:** `src/llm_inference/`.
+    *   **Relationship:** Agent Core issues `LLMRequest`, receives `LLMResponse`.
+
+**III. Aggregates & Entities**
+
+Identify core entities and their boundaries, ensuring transactional consistency within each aggregate.
+
+*   **`Agent` Aggregate:** Root for `Directive`, `Insight`, `ThoughtProcess`. Ensures that a Directive's processing, resulting Insights, and internal thoughts are managed as a consistent unit.
+*   **`Sensor` Aggregate:** Root for `SensorConfiguration`, `SensorStatus`. Ensures a sensor's state and configuration are consistent.
+*   **`MLModel` Aggregate:** Root for `ModelConfiguration`, `ModelPerformanceMetrics`. Ensures a model's definition and its operational state are consistent.
+
+**IV. Services & Repositories**
+
+*   **Domain Services:** Operations that span multiple aggregates or don't naturally fit within an entity (e.g., `CognitiveOrchestrationService` to manage the Refactor/Break Down/Compile flow).
+*   **Application Services:** Orchestrate domain services and interact with external systems (e.g., `UserInteractionService` to handle CLI/UI input).
+*   **Repositories:** Abstract persistence mechanisms for aggregates (e.g., `LongTermMemoryRepository` for `LongTermMemoryManager`).
+
+**V. Modules & Directory Structure (Proposed)**
+
+```
+src/
+├── core/
+│   ├── agent/             # Agent orchestration, Directive, Insight, ThoughtProcess
+│   ├── memory/            # LongTermMemoryManager, WorkingMemoryManager, ThoughtProcessManager
+│   └── tooling/           # ToolManager, Tool definitions
+├── perception/
+│   ├── sensors/           # Sensor interfaces (VideoSensor, TelemetrySensor)
+│   └── processors/        # Initial data processing (e.g., frame pre-processing)
+├── ml_models/
+│   ├── vision/            # ObjectDetector, PoseEstimator
+│   ├── timeseries/        # AnomalyDetector
+│   └── base_models.py     # MLModelInterface
+├── llm_inference/
+│   ├── providers/         # LocalLLMProvider, CloudLLMProvider
+│   └── base_llm.py        # LLMProviderInterface
+├── actions/
+│   ├── notifications/     # SMS, Email, Push Notification actions
+│   ├── device_control/    # GPIO, MQTT control for RPi/ESP32
+│   └── base_actions.py    # ActionInterface
+├── cli/                   # CLI commands and validation
+├── config/                # System settings, logging
+├── utils/                 # General utilities
+└── main.py                # Entry point
+```
+
+**Benefit:** DDD ensures a clear, maintainable, and scalable architecture that directly reflects the complex problem domain, making it easier to adapt to new use cases (child safety, aerospace, smart factory) and integrate diverse hardware (Jetson, RPi, ESP32).
+## TDD Refactoring Plan for Severino
+
+**Core Principle:** Write tests *before* writing or refactoring code. Follow Red-Green-Refactor cycle.
+
+**I. Foundational Testing (Unit & Integration)**
+
+1.  **Memory Modules:**
+    *   **Tests:** Verify `LongTermMemoryManager`, `WorkingMemoryManager`, `ThoughtProcessManager` CRUD operations, session management, and data integrity. Test edge cases (empty data, concurrent access if applicable). Ensure proper interaction between `WorkingMemoryManager` and `LongTermMemoryManager`.
+    *   **Focus:** Isolated functionality, data persistence, and retrieval.
+
+2.  **Tool Manager:**
+    *   **Tests:** Verify tool registration, retrieval, and execution. Test security aspects (confirmation prompts). Mock external tool implementations.
+    *   **Focus:** Tool lifecycle and secure invocation.
+
+3.  **LLM Abstraction Layer (`src/llm_inference/`):**
+    *   **Tests:** Define an `LLMProviderInterface` and write tests against it. Test `LocalLLMProvider` for model loading, inference, and error handling. Mock `llama.cpp` interactions.
+    *   **Focus:** LLM agnosticism and reliable inference.
+
+4.  **Perception Abstraction Layer (`src/perception/` - New):**
+    *   **Tests:** Define `SensorInterface`. Test `VideoSensor` (e.g., `CameraStream`) for connection, frame reading, and resource release. Mock `cv2.VideoCapture` for controlled testing without physical cameras. Test `TelemetrySensor` (for ESP32/RPi) for data acquisition.
+    *   **Focus:** Hardware abstraction and reliable data ingestion.
+
+5.  **ML Model Abstraction Layer (`src/ml_models/` - New):**
+    *   **Tests:** Define `MLModelInterface`. Test `VisionModel` (e.g., `ObjectDetector`) for model loading and inference. Mock `ultralytics.YOLO` for controlled testing. Test with dummy frames and expected detection outputs.
+    *   **Focus:** ML model agnosticism and accurate inference.
+
+6.  **Action/Actuation Abstraction Layer (`src/actions/` - New):**
+    *   **Tests:** Define `ActionInterface`. Test `NotificationAction` (e.g., email/SMS sender) and `DeviceControlAction` (e.g., GPIO control for RPi/ESP32). Mock external APIs/hardware interactions.
+    *   **Focus:** External interaction reliability and safety.
+
+**II. Cognitive Core Testing (Integration & Acceptance)**
+
+1.  **Cognitive Orchestrator (Refactor, Break Down, Compile):**
+    *   **Tests:** Write integration tests for the entire cognitive flow. Provide simulated user prompts and sensor data. Assert on the generated `ThoughtProcessManager` logs, `WorkingMemoryManager` state changes, and final `Insight` or `Action` outputs.
+    *   **Focus:** End-to-end intelligent behavior, adherence to CAMA principles.
+
+2.  **Domain-Specific Scenarios (Acceptance Tests):**
+    *   **Child Safety Monitoring:** Test with simulated video streams (e.g., child near balcony edge) and assert on correct alerts and logged insights.
+    *   **Aerospace Supply Chain (Simulated):** Test with simulated inspection data (e.g., counterfeit part detected) and assert on correct flagging, logging, and potential rejection actions.
+    *   **Smart Home/Factory (Simulated):** Test with simulated sensor data (e.g., temperature anomaly, machine fault) and assert on appropriate responses.
+    *   **Focus:** Real-world problem solving and user value.
+
+**III. Cross-Cutting Concerns (System & Performance)**
+
+1.  **Deployment & Resource Optimization:**
+    *   **Tests:** Write tests for Docker image build process. Implement performance benchmarks for ML inference and LLM calls on target hardware (Jetson). Assert on acceptable latency and resource usage.
+    *   **Focus:** Deployability, efficiency, and scalability.
+
+2.  **Error Handling & Resilience:**
+    *   **Tests:** Introduce fault injection (e.g., network failures, sensor disconnections, model crashes) and assert on graceful degradation, retry mechanisms, and proper error logging.
+    *   **Focus:** System stability and robustness.
+
+**IV. Test Automation & CI/CD**
+
+1.  **Automated Pipeline:** Integrate all tests into a CI/CD pipeline (e.g., GitHub Actions) to run on every code change.
+2.  **Test Data Management:** Establish clear strategies for managing test data (e.g., synthetic data, anonymized real-world data, mock objects).
+
+**Benefit:** TDD ensures a robust, well-tested codebase, reduces bugs, and provides a safety net for continuous refactoring and feature development, crucial for an enterprise-grade, cross-platform solution.
+
 Vision: Severino - The Indispensable Orchestrator for High-Performance Development
 
 Severino is not just a tool; it's a strategic imperative for organizations demanding peak efficiency, unparalleled insight, and scalable operations in their software and ML development lifecycles. We deliver immediate, measurable value by transforming complex workflows into streamlined, intelligent processes.
