@@ -16,7 +16,7 @@ graph TD
     E --> E1[Data Stream: Video Frames]
     E1 --> E2[ML Model: Object Detection (Child, Balcony)]
     E2 --> E3[ML Model: Pose Estimation/Activity Recognition]
-    E3 --> F{Refactor: Structured Data (Child Position, Balcony Boundary, Activity)}
+    E3 --> F[Refactor: Structured Data (Child Position, Balcony Boundary, Activity)]
     F --> G{Cognitive Layer (LLM)}
     G --> G1[Break Down: Decompose Goal (Track Child, Evaluate Proximity, Assess Danger)]
     G1 --> H{Working Memory}
