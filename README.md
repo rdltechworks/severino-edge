@@ -555,3 +555,112 @@ flowchart TD
 
 
 ```
+```mermaid
+---
+config:
+  layout: fixed
+  theme: base
+  themeVariables:
+    primaryColor: '#ffffff'
+    primaryTextColor: '#1f2937'
+    primaryBorderColor: '#3b82f6'
+    lineColor: '#6b7280'
+    secondaryColor: '#10b981'
+    tertiaryColor: '#f59e0b'
+    background: '#ffffff'
+    mainBkg: '#f8fafc'
+    secondBkg: '#e2e8f0'
+    clusterBkg: '#f1f5f9'
+---
+
+flowchart TD
+    User[👤 User] --> CLI[🖥️ Severino CLI]
+    CLI -.->|Local IPC| ReactUI[⚛️ Electron UI Hub]
+    
+    subgraph Severino["🚀 Severino MLOps Platform"]
+        direction TB
+        
+        subgraph InterfaceLayer["🌐 API Gateway"]
+            API_CLI_Interface[📡 RESTful API Gateway<br/>gRPC & WebSocket<br/>Auth & Rate Limiting]
+        end
+        
+        subgraph CoreLayer["🧠 Agent Orchestration"]
+            Agent_Orchestration[🎯 Multi-Agent Coordinator<br/>Task Scheduling<br/>Resource Management]
+        end
+        
+        subgraph IntelligenceLayer["🤖 AI/ML Processing"]
+            LLM_Inference[💭 LLM Inference Engine<br/>Model Caching<br/>Batch Processing]
+            ML_Model_Module[🔬 ML Model Pipeline<br/>Training & Validation<br/>Model Registry]
+            Perception_Module[👁️ Computer Vision<br/>Image Processing<br/>Object Detection]
+        end
+        
+        subgraph LLMServices["🧮 LLM Infrastructure"]
+            LLM_Selection_Config[⚙️ LLM Router<br/>Load Balancing<br/>Failover Logic]
+            LocalLLM[🏠 Local LLM<br/>GGML Support<br/>GPU Acceleration]
+            CloudLLM[☁️ Cloud APIs<br/>OpenAI/Anthropic<br/>Connection Pooling]
+        end
+        
+        subgraph DataLayer["💾 Data Platform"]
+            Data_Persistence[📊 Data Persistence<br/>CRUD Operations<br/>Backup & Recovery]
+            SQLite[🗄️ SQLite Database<br/>WAL Mode<br/>Optimized Indexes]
+            MLMonitoring[📈 ML Monitoring<br/>Performance Tracking<br/>Drift Detection]
+        end
+        
+        subgraph EdgeLayer["🌐 Edge Computing"]
+            Device_Sensor_Data[📡 Device Streams<br/>Protocol Adapters<br/>Stream Processing]
+            Edge_Device[🔌 Edge AI Devices<br/>Jetson/RPi Support<br/>Container Deployment]
+        end
+    end
+    
+    %% Core Connections
+    ReactUI -.->|HTTP/WebSocket| API_CLI_Interface
+    CLI -.->|gRPC| API_CLI_Interface
+    
+    API_CLI_Interface ==> Agent_Orchestration
+    Agent_Orchestration ==> LLM_Inference
+    Agent_Orchestration ==> ML_Model_Module
+    Agent_Orchestration ==> Perception_Module
+    Agent_Orchestration ==> Data_Persistence
+    
+    %% LLM Flow
+    LLM_Inference <--> LLM_Selection_Config
+    LLM_Selection_Config --> LocalLLM
+    LLM_Selection_Config --> CloudLLM
+    LocalLLM --> LLM_Inference
+    CloudLLM --> LLM_Inference
+    
+    %% Data Flow
+    ML_Model_Module <--> MLMonitoring
+    Data_Persistence <--> SQLite
+    
+    %% Edge Flow
+    Perception_Module <--> Device_Sensor_Data
+    Device_Sensor_Data <--> Edge_Device
+    API_CLI_Interface --> Edge_Device
+    Edge_Device --> Perception_Module
+    
+    %% Value Props
+    Agent_Orchestration -.->|"Reduces complexity"| IntelligenceLayer
+    LLM_Selection_Config -.->|"Cost optimization"| LLMServices
+    MLMonitoring -.->|"Production reliability"| DataLayer
+    
+    %% Styling
+    classDef userClass fill:#10b981,stroke:#059669,stroke-width:3px,color:#ffffff
+    classDef cliClass fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#ffffff
+    classDef interfaceClass fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#ffffff
+    classDef coreClass fill:#f59e0b,stroke:#d97706,stroke-width:3px,color:#ffffff
+    classDef intelligenceClass fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#ffffff
+    classDef llmClass fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#ffffff
+    classDef dataClass fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
+    classDef edgeClass fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#ffffff
+    
+    class User userClass
+    class CLI,ReactUI cliClass
+    class API_CLI_Interface interfaceClass
+    class Agent_Orchestration coreClass
+    class LLM_Inference,ML_Model_Module,Perception_Module intelligenceClass
+    class LLM_Selection_Config,LocalLLM,CloudLLM llmClass
+    class Data_Persistence,SQLite,MLMonitoring dataClass
+    class Device_Sensor_Data,Edge_Device edgeClass
+
+```
