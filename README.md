@@ -34,25 +34,28 @@ graph TD
 This diagram shows Severino's application in an SMB manufacturing setting for automated quality control, demonstrating its ability to monitor, analyze, and act on production data.
 
 ```mermaid
-graph TD
-    A[User Prompt: "Monitor product defects on Line 1"] --> B{Severino CLI}
-    B --> C{Cognitive Layer (LLM)}
-    C --> C1[Refactor: Interpret Prompt, Identify Goal (Defect Detection)]
-    C1 --> D{Tool Manager}
-    D --> D1[Tool: Connect to Production Line Camera]
-    D1 --> E[Perception Layer (Jetson/Edge Device)]
-    E --> E1[Data Stream: Product Images]
-    E1 --> E2[ML Model: Anomaly Detection/Defect Classification]
-    E2 --> F{Refactor: Structured Data (Defect Type, Location, Severity)}
-    F --> G{Cognitive Layer (LLM)}
-    G --> G1[Break Down: Decompose Goal (Identify Defect, Categorize, Prioritize)]
-    G1 --> H{Working Memory}
-    H --> I{Semantic Memory (Defect Catalog, QC Standards)}
-    G1 --> J{LLM Inference (Iterative Reasoning)}
-    J --> K[Compile: Synthesize Insights (e.g., "Scratch detected on Unit 123", "Minor defect")]
-    K --> L{Action Layer}
-    L --> L1[Tool: Trigger Reject Mechanism (e.g., robotic arm)]
-    L --> L2[Tool: Alert Supervisor (SMS/Dashboard)]
-    L --> L3[Tool: Log Defect Data]
-    L --> M[Production Report/Analytics]
+---
+config:
+  layout: fixed
+---
+flowchart TD
+    A["User"] --> B["Severino CLI"]
+    B --> C["Cognitive Layer LLM"]
+    C --> C1["Refactor"]
+    C1 --> D{"Tool Manager"}
+    D --> D1["Tool: Network Scan"]
+    D1 --> D2["Tool: Connect to Camera R"]
+    D2 --> E["Perception Layer"]
+    E --> E1["Data Stream: Video Frames"]
+    E1 --> E2["ML Model: Object Detection"]
+    E2 --> E3["ML Model: Pose Estimatioivity Recognition"]
+    E3 --> F["Refactor: Structured Data y Boundary, Activit"]
+    F --> G["Cognitive LayerLLM"]
+    G --> G1["Break Down:  Child, ty, Asse"]
+    G1 --> H["Working Memory"] & J["LLM Inference"]
+    H --> I["Semantic Memory"]
+    J --> K["Compile: Synthesize Insights  neh"]
+    K --> L["Action Layer"]
+    L --> L1["Tool: Se"] & L2["Tool: Log Event"] & M["User Feedback/Report"]
+
 ```
